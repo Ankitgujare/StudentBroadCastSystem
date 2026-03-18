@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "320655720040",
+    "firebase_url": "https://studentbroadcastsystem-default-rtdb.firebaseio.com",
+    "project_id": "studentbroadcastsystem",
+    "storage_bucket": "studentbroadcastsystem.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320655720040:android:19f6e0e6926fa97adf05dd",
+        "android_client_info": {
+          "package_name": "com.example.studentbroadcast"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "320655720040-pi880j7ngdb2r8oekoq9fh82fuuogreh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOilgrjAylyzzB8V0jqXiRiEVUVCQJJyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320655720040-pi880j7ngdb2r8oekoq9fh82fuuogreh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320655720040:android:e6af1d609f36152bdf05dd",
+        "android_client_info": {
+          "package_name": "com.example.studentbroadcastsystem"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "320655720040-pi880j7ngdb2r8oekoq9fh82fuuogreh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOilgrjAylyzzB8V0jqXiRiEVUVCQJJyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "320655720040-pi880j7ngdb2r8oekoq9fh82fuuogreh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
