@@ -22,27 +22,60 @@
         android:textColor="@android:color/white"
         android:backgroundTint="@android:color/holo_red_dark" />
 
+    <Button
+        android:id="@+id/btnViewMyRequests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View My Requests"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:textColor="@android:color/white" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Branch:" />
+        android:text="Select Branch(es):" />
 
-    <Spinner
-        android:id="@+id/spinnerBranch"
+    <TextView
+        android:id="@+id/tvSelectedBranches"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="Tap to select branches"
+        android:padding="12dp"
+        android:background="#EEEEEE"
+        android:textSize="16sp"
         android:layout_marginBottom="16dp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Semester:" />
+        android:text="Select Semester(s):" />
 
-    <Spinner
-        android:id="@+id/spinnerSemester"
+    <TextView
+        android:id="@+id/tvSelectedSemesters"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp" />
+        android:text="Tap to select semesters"
+        android:padding="12dp"
+        android:background="#EEEEEE"
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp" />
+
+    <CheckBox
+        android:id="@+id/cbIndividual"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send to Individual Student"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etIndividualEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Student Email Address"
+        android:inputType="textEmailAddress"
+        android:visibility="gone"
+        android:layout_marginBottom="16dp" />
 
     <EditText
         android:id="@+id/messageBox"

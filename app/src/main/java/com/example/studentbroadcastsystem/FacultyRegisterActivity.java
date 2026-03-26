@@ -13,14 +13,14 @@ public class FacultyRegisterActivity extends AppCompatActivity {
     private EditText etEmail, etPassword, etConfirmPassword;
     private Button btnRegister;
     private TextView tvLogin;
-    private DatabaseHelper dbHelper;
+    private FirebaseManager firebaseManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_faculty_register);
 
-        dbHelper = new DatabaseHelper(this);
+        firebaseManager = FirebaseManager.getInstance();
 
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -43,13 +43,29 @@ public class FacultyRegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            boolean isRegistered = dbHelper.registerFaculty(email, password);
-            if (isRegistered) {
-                Toast.makeText(this, "Registration Successful", Toast.LENGTH_SHORT).show();
-                finish(); // Go back to login
-            } else {
-                Toast.makeText(this, "Registration Failed (Email might exist)", Toast.LENGTH_SHORT).show();
-            }
+            btnRegister.setEnabled(false);
+            firebaseManager.registerFaculty(email, password, new FirebaseManager.RegisterCallback() {
+                @Override
+                public void onResult(boolean success) {
+                    runOnUiThread(() -> {
+                        btnRegister.setEnabled(true);
+                        if (success) {
+                            Toast.makeText(FacultyRegisterActivity.this, "Registration Successful", Toast.LENGTH_SHORT).show();
+                            finish(); // Go back to login
+                        } else {
+                            Toast.makeText(FacultyRegisterActivity.this, "Registration Failed (Email might exist)", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    runOnUiThread(() -> {
+                        btnRegister.setEnabled(true);
+                        Toast.makeText(FacultyRegisterActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
         });
 
         tvLogin.setOnClickListener(v -> finish());

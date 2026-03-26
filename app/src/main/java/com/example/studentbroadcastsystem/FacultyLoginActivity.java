@@ -15,14 +15,14 @@ public class FacultyLoginActivity extends AppCompatActivity {
     private EditText etEmail, etPassword;
     private Button btnLogin;
     private TextView tvRegister;
-    private DatabaseHelper dbHelper;
+    private FirebaseManager firebaseManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_faculty_login);
 
-        dbHelper = new DatabaseHelper(this);
+        firebaseManager = FirebaseManager.getInstance();
 
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -38,21 +38,39 @@ public class FacultyLoginActivity extends AppCompatActivity {
                 return;
             }
 
-            if (dbHelper.checkUserLogin(email, password, "faculty")) {
-                SharedPreferences.Editor editor = getSharedPreferences("LoginStatus", MODE_PRIVATE).edit();
-                editor.putBoolean("isLoggedIn", true);
-                editor.putString("role", "faculty");
-                editor.putString("email", email);
-                editor.apply();
+            btnLogin.setEnabled(false);
 
-                Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(FacultyLoginActivity.this, FacultyDashboardActivity.class);
-                intent.putExtra("FACULTY_EMAIL", email);
-                startActivity(intent);
-                finish();
-            } else {
-                Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-            }
+            firebaseManager.checkUserLogin(email, password, "faculty", new FirebaseManager.LoginCallback() {
+                @Override
+                public void onResult(boolean success) {
+                    runOnUiThread(() -> {
+                        btnLogin.setEnabled(true);
+                        if (success) {
+                            SharedPreferences.Editor editor = getSharedPreferences("LoginStatus", MODE_PRIVATE).edit();
+                            editor.putBoolean("isLoggedIn", true);
+                            editor.putString("role", "faculty");
+                            editor.putString("email", email);
+                            editor.apply();
+
+                            Toast.makeText(FacultyLoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(FacultyLoginActivity.this, FacultyDashboardActivity.class);
+                            intent.putExtra("FACULTY_EMAIL", email);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Toast.makeText(FacultyLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    runOnUiThread(() -> {
+                        btnLogin.setEnabled(true);
+                        Toast.makeText(FacultyLoginActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
         });
 
         tvRegister.setOnClickListener(v -> {

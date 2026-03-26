@@ -13,14 +13,14 @@ public class AdminLoginActivity extends AppCompatActivity {
 
     EditText email, password;
     Button loginBtn;
-    private DatabaseHelper dbHelper;
+    private FirebaseManager firebaseManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_login);
 
-        dbHelper = new DatabaseHelper(this);
+        firebaseManager = FirebaseManager.getInstance();
 
         email = findViewById(R.id.adminEmail);
         password = findViewById(R.id.adminPassword);
@@ -35,18 +35,36 @@ public class AdminLoginActivity extends AppCompatActivity {
                 return;
             }
 
-            if (dbHelper.checkUserLogin(adminEmail, adminPassword, "admin")) {
-                SharedPreferences.Editor editor = getSharedPreferences("LoginStatus", MODE_PRIVATE).edit();
-                editor.putBoolean("isLoggedIn", true);
-                editor.putString("role", "admin");
-                editor.apply();
+            loginBtn.setEnabled(false);
 
-                Toast.makeText(this,"Login Successful",Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(AdminLoginActivity.this, AdminDashboardActivity.class));
-                finish();
-            } else {
-                Toast.makeText(this,"Login Failed",Toast.LENGTH_SHORT).show();
-            }
+            firebaseManager.checkUserLogin(adminEmail, adminPassword, "admin", new FirebaseManager.LoginCallback() {
+                @Override
+                public void onResult(boolean success) {
+                    runOnUiThread(() -> {
+                        loginBtn.setEnabled(true);
+                        if (success) {
+                            SharedPreferences.Editor editor = getSharedPreferences("LoginStatus", MODE_PRIVATE).edit();
+                            editor.putBoolean("isLoggedIn", true);
+                            editor.putString("role", "admin");
+                            editor.apply();
+
+                            Toast.makeText(AdminLoginActivity.this,"Login Successful",Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(AdminLoginActivity.this, AdminDashboardActivity.class));
+                            finish();
+                        } else {
+                            Toast.makeText(AdminLoginActivity.this,"Login Failed",Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    runOnUiThread(() -> {
+                        loginBtn.setEnabled(true);
+                        Toast.makeText(AdminLoginActivity.this,"Error: " + e.getMessage(),Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
         });
     }
 }

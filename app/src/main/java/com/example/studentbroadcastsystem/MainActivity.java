@@ -40,8 +40,18 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // Initialize Database to ensure tables are created for App Inspector
-        new DatabaseHelper(this).getWritableDatabase();
+        // Initialize Firebase (Optional: call seedInitialData to populate test users)
+        FirebaseManager.getInstance().seedInitialData(new FirebaseManager.MessageActionCallback() {
+            @Override
+            public void onSuccess() {
+                android.util.Log.d("FirebaseSetup", "Successfully populated initial data!");
+            }
+
+            @Override
+            public void onError(Exception e) {
+                android.util.Log.e("FirebaseSetup", "Failed to populate data", e);
+            }
+        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

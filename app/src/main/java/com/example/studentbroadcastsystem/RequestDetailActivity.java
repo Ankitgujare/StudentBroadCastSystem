@@ -1,9 +1,9 @@
 package com.example.studentbroadcastsystem;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,9 +13,10 @@ import java.util.List;
 
 public class RequestDetailActivity extends AppCompatActivity {
 
-    private TextView tvFacultyEmail, tvBranch, tvSemester, tvMessageContent;
-    private Button btnApproveSend;
-    private DatabaseHelper dbHelper;
+    private TextView tvFacultyEmail;
+    private EditText etBranch, etSemester, etMessageContent, etRejectionReason;
+    private Button btnApproveSend, btnReject;
+    private FirebaseManager firebaseManager;
     private MessageModel currentMessage;
 
     @Override
@@ -23,13 +24,15 @@ public class RequestDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_request_detail);
 
-        dbHelper = new DatabaseHelper(this);
+        firebaseManager = FirebaseManager.getInstance();
 
         tvFacultyEmail = findViewById(R.id.tvFacultyEmail);
-        tvBranch = findViewById(R.id.tvBranch);
-        tvSemester = findViewById(R.id.tvSemester);
-        tvMessageContent = findViewById(R.id.tvMessageContent);
+        etBranch = findViewById(R.id.etBranch);
+        etSemester = findViewById(R.id.etSemester);
+        etMessageContent = findViewById(R.id.etMessageContent);
+        etRejectionReason = findViewById(R.id.etRejectionReason);
         btnApproveSend = findViewById(R.id.btnApproveSend);
+        btnReject = findViewById(R.id.btnReject);
 
         int messageId = getIntent().getIntExtra("MESSAGE_ID", -1);
         if (messageId == -1) {
@@ -38,49 +41,168 @@ public class RequestDetailActivity extends AppCompatActivity {
             return;
         }
 
-        currentMessage = dbHelper.getMessageById(messageId);
-        if (currentMessage == null) {
-            Toast.makeText(this, "Message not found", Toast.LENGTH_SHORT).show();
-            finish();
+        firebaseManager.getMessageById(messageId, new FirebaseManager.FetchMessagesCallback() {
+            @Override
+            public void onMessagesFetched(List<MessageModel> messages) {
+                runOnUiThread(() -> {
+                    if (messages.isEmpty()) {
+                        Toast.makeText(RequestDetailActivity.this, "Message not found", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+                    
+                    currentMessage = messages.get(0);
+                    tvFacultyEmail.setText("Faculty: " + currentMessage.getSenderEmail());
+                    
+                    if (currentMessage.isIndividual()) {
+                        etBranch.setText("Individual Student");
+                        etSemester.setText(currentMessage.getIndividualEmail());
+                        etBranch.setEnabled(false);
+                        etSemester.setEnabled(false);
+                    } else {
+                        etBranch.setText(currentMessage.getBranch());
+                        etSemester.setText(currentMessage.getSemester());
+                    }
+                    
+                    etMessageContent.setText(currentMessage.getContent());
+                    
+                    btnApproveSend.setOnClickListener(v -> handleApproveAndSend());
+                    btnReject.setOnClickListener(v -> handleReject());
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(RequestDetailActivity.this, "Error fetching message", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+            }
+        });
+    }
+
+    private void handleReject() {
+        String reason = etRejectionReason.getText().toString().trim();
+        if (reason.isEmpty()) {
+            Toast.makeText(this, "Please enter a reason for rejection", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        tvFacultyEmail.setText("Faculty: " + currentMessage.getSenderEmail());
-        tvBranch.setText("Branch: " + currentMessage.getBranch());
-        tvSemester.setText("Semester: " + currentMessage.getSemester());
-        tvMessageContent.setText(currentMessage.getContent());
-
-        btnApproveSend.setOnClickListener(v -> {
-            List<String> studentEmails = dbHelper.getStudentEmails(currentMessage.getBranch(), currentMessage.getSemester());
-
-            if (studentEmails.isEmpty()) {
-                Toast.makeText(this, "No students found for this Branch and Semester", Toast.LENGTH_SHORT).show();
+        btnReject.setEnabled(false);
+        btnApproveSend.setEnabled(false);
+        
+        firebaseManager.rejectMessage(currentMessage.getId(), reason, new FirebaseManager.MessageActionCallback() {
+            @Override
+            public void onSuccess() {
+                runOnUiThread(() -> {
+                    Toast.makeText(RequestDetailActivity.this, "Request Rejected", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
             }
 
-            dbHelper.approveMessage(currentMessage.getId());
-            Toast.makeText(this, "Message Approved", Toast.LENGTH_SHORT).show();
-
-            if (!studentEmails.isEmpty()) {
-                String[] bccArray = studentEmails.toArray(new String[0]);
-                
-                String formattedMessage = "Hello Students,\n" +
-                        "You have a new broadcast message.\n" +
-                        "From: " + currentMessage.getSenderEmail() + "\n" +
-                        "Branch: " + currentMessage.getBranch() + "\n" +
-                        "Semester: " + currentMessage.getSemester() + "\n" +
-                        "Message:\n" + currentMessage.getContent() + "\n" +
-                        "Best Regards";
-
-                JavaMailAPI javaMailAPI = new JavaMailAPI(
-                        RequestDetailActivity.this, 
-                        bccArray, 
-                        "New Broadcast Alert: " + currentMessage.getBranch() + " Sem " + currentMessage.getSemester(), 
-                        formattedMessage
-                );
-                javaMailAPI.execute();
+            @Override
+            public void onError(Exception e) {
+                runOnUiThread(() -> {
+                    btnReject.setEnabled(true);
+                    btnApproveSend.setEnabled(true);
+                    Toast.makeText(RequestDetailActivity.this, "Failed to reject: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
             }
-            
-            finish();
         });
+    }
+
+    private void handleApproveAndSend() {
+        btnApproveSend.setEnabled(false);
+        btnReject.setEnabled(false);
+        Toast.makeText(this, "Approving message...", Toast.LENGTH_SHORT).show();
+        
+        // Save edits
+        currentMessage.setContent(etMessageContent.getText().toString().trim());
+        if (!currentMessage.isIndividual()) {
+            currentMessage.setBranch(etBranch.getText().toString().trim());
+            currentMessage.setSemester(etSemester.getText().toString().trim());
+        }
+
+        firebaseManager.updateMessage(currentMessage, new FirebaseManager.MessageActionCallback() {
+            @Override
+            public void onSuccess() {
+                firebaseManager.approveMessage(currentMessage.getId(), new FirebaseManager.MessageActionCallback() {
+                    @Override
+                    public void onSuccess() {
+                        sendEmailExecution();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        runOnUiThread(() -> {
+                            btnApproveSend.setEnabled(true);
+                            btnReject.setEnabled(true);
+                            Toast.makeText(RequestDetailActivity.this, "Approval failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                runOnUiThread(() -> {
+                    btnApproveSend.setEnabled(true);
+                    btnReject.setEnabled(true);
+                    Toast.makeText(RequestDetailActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    private void sendEmailExecution() {
+        if (currentMessage.isIndividual()) {
+            String[] bccArray = {currentMessage.getIndividualEmail()};
+            sendActualEmail(bccArray);
+        } else {
+            firebaseManager.getStudentEmails(currentMessage.getBranch(), currentMessage.getSemester(), new FirebaseManager.FetchStudentsCallback() {
+                @Override
+                public void onStudentsFetched(List<String> emails) {
+                    runOnUiThread(() -> {
+                        if (emails.isEmpty()) {
+                            Toast.makeText(RequestDetailActivity.this, "No students found for this Branch and Semester", Toast.LENGTH_SHORT).show();
+                            finish();
+                        } else {
+                            String[] bccArray = emails.toArray(new String[0]);
+                            sendActualEmail(bccArray);
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(RequestDetailActivity.this, "Approved but failed to fetch students.", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                }
+            });
+        }
+    }
+
+    private void sendActualEmail(String[] bccArray) {
+        String formattedMessage = "Hello Student(s),\n\n" +
+                "You have a new broadcast message.\n\n" +
+                "From: " + currentMessage.getSenderEmail() + "\n" +
+                "Message:\n" + currentMessage.getContent() + "\n\n" +
+                "Best Regards";
+
+        String subject = "New Broadcast Alert";
+        if (!currentMessage.isIndividual()) {
+            subject = "New Broadcast Alert: " + currentMessage.getBranch() + " Sem " + currentMessage.getSemester();
+        }
+
+        JavaMailAPI javaMailAPI = new JavaMailAPI(
+                getApplicationContext(), 
+                bccArray, 
+                subject, 
+                formattedMessage
+        );
+        javaMailAPI.execute();
+        Toast.makeText(getApplicationContext(), "Message Approved and Email Scheduled", Toast.LENGTH_SHORT).show();
+        finish();
     }
 }
