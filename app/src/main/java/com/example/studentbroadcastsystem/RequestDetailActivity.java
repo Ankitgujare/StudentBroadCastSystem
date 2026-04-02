@@ -13,7 +13,7 @@ import java.util.List;
 
 public class RequestDetailActivity extends AppCompatActivity {
 
-    private TextView tvFacultyEmail;
+    private TextView tvFacultyEmail, tvSubject;
     private EditText etBranch, etSemester, etMessageContent, etRejectionReason;
     private Button btnApproveSend, btnReject;
     private FirebaseManager firebaseManager;
@@ -27,6 +27,7 @@ public class RequestDetailActivity extends AppCompatActivity {
         firebaseManager = FirebaseManager.getInstance();
 
         tvFacultyEmail = findViewById(R.id.tvFacultyEmail);
+        tvSubject = findViewById(R.id.tvSubject);
         etBranch = findViewById(R.id.etBranch);
         etSemester = findViewById(R.id.etSemester);
         etMessageContent = findViewById(R.id.etMessageContent);
@@ -53,6 +54,7 @@ public class RequestDetailActivity extends AppCompatActivity {
                     
                     currentMessage = messages.get(0);
                     tvFacultyEmail.setText("Faculty: " + currentMessage.getSenderEmail());
+                    tvSubject.setText("Subject: " + currentMessage.getSubject());
                     
                     if (currentMessage.isIndividual()) {
                         etBranch.setText("Individual Student");
@@ -184,16 +186,24 @@ public class RequestDetailActivity extends AppCompatActivity {
     }
 
     private void sendActualEmail(String[] bccArray) {
-        String formattedMessage = "Hello Student(s),\n\n" +
-                "You have a new broadcast message.\n\n" +
-                "From: " + currentMessage.getSenderEmail() + "\n" +
-                "Message:\n" + currentMessage.getContent() + "\n\n" +
-                "Best Regards";
-
-        String subject = "New Broadcast Alert";
-        if (!currentMessage.isIndividual()) {
-            subject = "New Broadcast Alert: " + currentMessage.getBranch() + " Sem " + currentMessage.getSemester();
+        String formattedMessage;
+        if (currentMessage.isIndividual()) {
+            formattedMessage = "Hello Student(s),\n\n" +
+                    "Subject: " + currentMessage.getSubject() + "\n" +
+                    "Faculty Name: " + currentMessage.getSenderEmail() + "\n" +
+                    "Target: Individual Student\n\n" +
+                    "Message:\n" + currentMessage.getContent() + "\n\n" +
+                    "Best Regards";
+        } else {
+            formattedMessage = "Hello Student(s),\n\n" +
+                    "Subject: " + currentMessage.getSubject() + "\n" +
+                    "Faculty Name: " + currentMessage.getSenderEmail() + "\n" +
+                    "Branch: " + currentMessage.getBranch() + " | Semester: " + currentMessage.getSemester() + "\n\n" +
+                    "Message:\n" + currentMessage.getContent() + "\n\n" +
+                    "Best Regards";
         }
+
+        String subject = currentMessage.getSubject() != null && !currentMessage.getSubject().isEmpty() ? currentMessage.getSubject() : "New Broadcast Alert";
 
         JavaMailAPI javaMailAPI = new JavaMailAPI(
                 getApplicationContext(), 

@@ -19,7 +19,7 @@ public class FacultyDashboardActivity extends AppCompatActivity {
 
     private TextView tvSelectedBranches, tvSelectedSemesters;
     private CheckBox cbIndividual;
-    private EditText etIndividualEmail, messageBox;
+    private EditText etIndividualEmail, etSubject, messageBox;
     private Button sendButton, btnViewMyRequests;
 
     private String[] branchesArray = {"BCA", "MCA"};
@@ -48,6 +48,7 @@ public class FacultyDashboardActivity extends AppCompatActivity {
         tvSelectedSemesters = findViewById(R.id.tvSelectedSemesters);
         cbIndividual = findViewById(R.id.cbIndividual);
         etIndividualEmail = findViewById(R.id.etIndividualEmail);
+        etSubject = findViewById(R.id.etSubject);
         messageBox = findViewById(R.id.messageBox);
         sendButton = findViewById(R.id.sendButton);
         btnViewMyRequests = findViewById(R.id.btnViewMyRequests);
@@ -166,8 +167,13 @@ public class FacultyDashboardActivity extends AppCompatActivity {
 
         sendButton.setOnClickListener(v -> {
             String msg = messageBox.getText().toString().trim();
+            String subject = etSubject.getText().toString().trim();
             if (msg.isEmpty()) {
                 Toast.makeText(this, "Enter some message", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (subject.isEmpty()) {
+                Toast.makeText(this, "Enter a subject", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -193,13 +199,14 @@ public class FacultyDashboardActivity extends AppCompatActivity {
             }
 
             sendButton.setEnabled(false);
-            firebaseManager.addMessageRequest(facultyEmail, msg, finalBranch, finalSemester, isIndividual, individualEmail, new FirebaseManager.AddMessageCallback() {
+            firebaseManager.addMessageRequest(facultyEmail, subject, msg, finalBranch, finalSemester, isIndividual, individualEmail, new FirebaseManager.AddMessageCallback() {
                 @Override
                 public void onResult(boolean success) {
                     runOnUiThread(() -> {
                         sendButton.setEnabled(true);
                         if (success) {
                             Toast.makeText(FacultyDashboardActivity.this, "Message Sent for Approval!", Toast.LENGTH_SHORT).show();
+                            etSubject.setText("");
                             messageBox.setText("");
                             if (isIndividual) {
                                 etIndividualEmail.setText("");

@@ -31,6 +31,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
             startActivity(new Intent(AdminDashboardActivity.this, MainActivity.class));
             finish();
         });
+        Button btnViewProcessedRequests = findViewById(R.id.btnViewProcessedRequests);
+        btnViewProcessedRequests.setOnClickListener(v -> {
+            startActivity(new Intent(AdminDashboardActivity.this, AdminRequestsActivity.class));
+        });
     }
 
     @Override

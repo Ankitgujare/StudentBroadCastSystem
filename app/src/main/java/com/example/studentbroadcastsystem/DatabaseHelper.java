@@ -212,7 +212,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 boolean isInd = cursor.getInt(cursor.getColumnIndexOrThrow(COL_MSG_IS_INDIVIDUAL)) == 1;
                 String indEmail = cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_INDIVIDUAL_EMAIL));
                 String rejReason = cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_REJECTION_REASON));
-                messages.add(new MessageModel(id, sender, content, branch, semester, status, isInd, indEmail, rejReason));
+                messages.add(new MessageModel(id, sender, "", content, branch, semester, status, isInd, indEmail, rejReason, 0L));
             } while (cursor.moveToNext());
         }
         cursor.close();
@@ -233,7 +233,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             String indEmail = cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_INDIVIDUAL_EMAIL));
             String rejReason = cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_REJECTION_REASON));
             cursor.close();
-            return new MessageModel(msgId, sender, content, branch, semester, status, isInd, indEmail, rejReason);
+            return new MessageModel(msgId, sender, "", content, branch, semester, status, isInd, indEmail, rejReason, 0L);
         }
         cursor.close();
         return null; // Not found
@@ -278,7 +278,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 boolean isInd = cursor.getInt(cursor.getColumnIndexOrThrow(COL_MSG_IS_INDIVIDUAL)) == 1;
                 String indEmail = cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_INDIVIDUAL_EMAIL));
                 String rejReason = cursor.getString(cursor.getColumnIndexOrThrow(COL_MSG_REJECTION_REASON));
-                messages.add(new MessageModel(id, sender, content, branch, semester, status, isInd, indEmail, rejReason));
+                messages.add(new MessageModel(id, sender, "", content, branch, semester, status, isInd, indEmail, rejReason, 0L));
             } while (cursor.moveToNext());
         }
         cursor.close();

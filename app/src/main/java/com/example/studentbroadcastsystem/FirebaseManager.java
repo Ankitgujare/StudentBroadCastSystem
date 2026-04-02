@@ -100,7 +100,7 @@ public class  FirebaseManager {
 
     // --- Message Management ---
 
-    public void addMessageRequest(String senderEmail, String message, String branch, String semester, boolean isIndividual, String individualEmail, AddMessageCallback callback) {
+    public void addMessageRequest(String senderEmail, String subject, String message, String branch, String semester, boolean isIndividual, String individualEmail, AddMessageCallback callback) {
         Map<String, Object> msg = new HashMap<>();
         // In Firestore, creating our own integer IDs is hard. 
         // We'll generate a random integer for 'id' to keep it compatible with existing MessageModel structure,
@@ -110,10 +110,12 @@ public class  FirebaseManager {
         
         msg.put("id", generatedId);
         msg.put("sender_email", senderEmail);
+        msg.put("subject", subject);
         msg.put("content", message);
         msg.put("branch", branch);
         msg.put("semester", semester);
-        msg.put("status", "pending");
+        long currentTimestamp = System.currentTimeMillis();
+        msg.put("timestamp", currentTimestamp);
         msg.put("is_individual", isIndividual);
         msg.put("individual_email", individualEmail != null ? individualEmail : "");
         msg.put("rejection_reason", "");
@@ -145,7 +147,10 @@ public class  FirebaseManager {
                             boolean isInd = Boolean.TRUE.equals(document.getBoolean("is_individual"));
                             String indEmail = document.getString("individual_email");
                             String rejReason = document.getString("rejection_reason");
-                            messages.add(new MessageModel(id, sender, content, branch, semester, status, isInd, indEmail, rejReason));
+                            long timestamp = document.contains("timestamp") ? document.getLong("timestamp") : 0L;
+                            String subject = document.getString("subject");
+                            if (subject == null) subject = "";
+                            messages.add(new MessageModel(id, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -165,6 +170,8 @@ public class  FirebaseManager {
                         try {
                             int msgId = documentSnapshot.getLong("id").intValue();
                             String sender = documentSnapshot.getString("sender_email");
+                            String subject = documentSnapshot.getString("subject");
+                            if (subject == null) subject = "";
                             String content = documentSnapshot.getString("content");
                             String branch = documentSnapshot.getString("branch");
                             String semester = documentSnapshot.getString("semester");
@@ -172,7 +179,8 @@ public class  FirebaseManager {
                             boolean isInd = Boolean.TRUE.equals(documentSnapshot.getBoolean("is_individual"));
                             String indEmail = documentSnapshot.getString("individual_email");
                             String rejReason = documentSnapshot.getString("rejection_reason");
-                            list.add(new MessageModel(msgId, sender, content, branch, semester, status, isInd, indEmail, rejReason));
+                            long timestamp = documentSnapshot.contains("timestamp") ? documentSnapshot.getLong("timestamp") : 0L;
+                            list.add(new MessageModel(msgId, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -203,6 +211,7 @@ public class  FirebaseManager {
 
     public void updateMessage(MessageModel msg, MessageActionCallback callback) {
         Map<String, Object> updates = new HashMap<>();
+        updates.put("subject", msg.getSubject());
         updates.put("content", msg.getContent());
         updates.put("branch", msg.getBranch());
         updates.put("semester", msg.getSemester());
@@ -230,7 +239,40 @@ public class  FirebaseManager {
                             boolean isInd = Boolean.TRUE.equals(document.getBoolean("is_individual"));
                             String indEmail = document.getString("individual_email");
                             String rejReason = document.getString("rejection_reason");
-                            messages.add(new MessageModel(id, sender, content, branch, semester, status, isInd, indEmail, rejReason));
+                            long timestamp = document.contains("timestamp") ? document.getLong("timestamp") : 0L;
+                            String subject = document.getString("subject");
+                            if (subject == null) subject = "";
+                            messages.add(new MessageModel(id, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    callback.onMessagesFetched(messages);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    public void getProcessedMessages(FetchMessagesCallback callback) {
+        db.collection(COLLECTION_MESSAGES)
+                .whereNotEqualTo("status", "pending")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<MessageModel> messages = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        try {
+                            int id = document.getLong("id").intValue();
+                            String sender = document.getString("sender_email");
+                            String content = document.getString("content");
+                            String branch = document.getString("branch");
+                            String semester = document.getString("semester");
+                            String status = document.getString("status");
+                            boolean isInd = Boolean.TRUE.equals(document.getBoolean("is_individual"));
+                            String indEmail = document.getString("individual_email");
+                            String rejReason = document.getString("rejection_reason");
+                            long timestamp = document.contains("timestamp") ? document.getLong("timestamp") : 0L;
+                            String subject = document.getString("subject");
+                            if (subject == null) subject = "";
+                            messages.add(new MessageModel(id, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

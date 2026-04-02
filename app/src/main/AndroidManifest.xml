@@ -32,6 +32,9 @@
             android:name=".AdminDashboardActivity"
             android:exported="false" />
         <activity
+            android:name=".AdminRequestsActivity"
+            android:exported="false" />
+        <activity
             android:name=".FacultyLoginActivity"
             android:exported="false" />
         <activity
