@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Student Broadcast System</string>
+    <string name="request_details">Request Details</string>
 </resources>
