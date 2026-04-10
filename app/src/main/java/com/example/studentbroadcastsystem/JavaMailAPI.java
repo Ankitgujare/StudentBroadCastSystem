@@ -40,14 +40,27 @@ public class JavaMailAPI {
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            boolean success = sendEmail();
-            handler.post(() -> {
-                if (success) {
-                    Toast.makeText(context, "Mails sent successfully in background!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(context, "Error sending mails. Check credentials & network.", Toast.LENGTH_LONG).show();
-                }
-            });
+            try {
+                // VERY IMPORTANT FIX FOR ANDROID: set the current thread's class loader
+                // otherwise javax.activation fails with NoClassDefFoundError in background threads
+                Thread.currentThread().setContextClassLoader(context.getClassLoader());
+                
+                boolean success = sendEmail();
+                handler.post(() -> {
+                    if (success) {
+                        Toast.makeText(context, "Mails sent successfully in background!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(context, "Error sending mails. Check credentials & network.", Toast.LENGTH_LONG).show();
+                    }
+                });
+            } catch (Throwable t) {
+                t.printStackTrace();
+                handler.post(() -> {
+                    Toast.makeText(context, "Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            } finally {
+                executor.shutdown();
+            }
         });
     }
 
@@ -59,7 +72,7 @@ public class JavaMailAPI {
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.port", "465");
 
-        session = Session.getDefaultInstance(properties, new javax.mail.Authenticator() {
+        session = Session.getInstance(properties, new javax.mail.Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
             }
@@ -81,7 +94,7 @@ public class JavaMailAPI {
             Transport.send(mimeMessage);
             return true;
 
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
