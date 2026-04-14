@@ -1,5 +1,7 @@
 package com.example.studentbroadcastsystem;
 
+import android.util.Log;
+
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -119,6 +121,7 @@ public class  FirebaseManager {
         msg.put("is_individual", isIndividual);
         msg.put("individual_email", individualEmail != null ? individualEmail : "");
         msg.put("rejection_reason", "");
+        msg.put("status", "pending");
 
         db.collection(COLLECTION_MESSAGES)
                 .document(String.valueOf(generatedId))
@@ -138,21 +141,31 @@ public class  FirebaseManager {
                     List<MessageModel> messages = new ArrayList<>();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         try {
-                            int id = document.getLong("id").intValue();
-                            String sender = document.getString("sender_email");
-                            String content = document.getString("content");
-                            String branch = document.getString("branch");
-                            String semester = document.getString("semester");
-                            String status = document.getString("status");
-                            boolean isInd = Boolean.TRUE.equals(document.getBoolean("is_individual"));
-                            String indEmail = document.getString("individual_email");
-                            String rejReason = document.getString("rejection_reason");
-                            long timestamp = document.contains("timestamp") ? document.getLong("timestamp") : 0L;
-                            String subject = document.getString("subject");
-                            if (subject == null) subject = "";
+                            int id = 0;
+                            if (document.contains("id") && document.get("id") != null) {
+                                id = document.getLong("id").intValue();
+                            } else {
+                                try { id = Integer.parseInt(document.getId()); } catch(NumberFormatException ignored) {}
+                            }
+                            String sender = document.contains("sender_email") ? document.getString("sender_email") : "";
+                            String content = document.contains("content") ? document.getString("content") : "";
+                            String branch = document.contains("branch") ? document.getString("branch") : "";
+                            String semester = document.contains("semester") ? document.getString("semester") : "";
+                            String status = document.contains("status") ? document.getString("status") : "pending";
+                            boolean isInd = document.contains("is_individual") && Boolean.TRUE.equals(document.getBoolean("is_individual"));
+                            String indEmail = document.contains("individual_email") ? document.getString("individual_email") : "";
+                            String rejReason = document.contains("rejection_reason") ? document.getString("rejection_reason") : "";
+                            long timestamp = 0L;
+                            if (document.contains("timestamp") && document.get("timestamp") != null) {
+                                Object tsObj = document.get("timestamp");
+                                if (tsObj instanceof Long) timestamp = (Long) tsObj;
+                                else if (tsObj instanceof Integer) timestamp = ((Integer) tsObj).longValue();
+                            }
+                            String subject = document.contains("subject") ? document.getString("subject") : "";
+                            
                             messages.add(new MessageModel(id, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Log.e("FirebaseManager", "Error parsing pending message: " + document.getId(), e);
                         }
                     }
                     callback.onMessagesFetched(messages);
@@ -168,21 +181,31 @@ public class  FirebaseManager {
                     List<MessageModel> list = new ArrayList<>();
                     if (documentSnapshot.exists()) {
                         try {
-                            int msgId = documentSnapshot.getLong("id").intValue();
-                            String sender = documentSnapshot.getString("sender_email");
-                            String subject = documentSnapshot.getString("subject");
-                            if (subject == null) subject = "";
-                            String content = documentSnapshot.getString("content");
-                            String branch = documentSnapshot.getString("branch");
-                            String semester = documentSnapshot.getString("semester");
-                            String status = documentSnapshot.getString("status");
-                            boolean isInd = Boolean.TRUE.equals(documentSnapshot.getBoolean("is_individual"));
-                            String indEmail = documentSnapshot.getString("individual_email");
-                            String rejReason = documentSnapshot.getString("rejection_reason");
-                            long timestamp = documentSnapshot.contains("timestamp") ? documentSnapshot.getLong("timestamp") : 0L;
+                            int msgId = 0;
+                            if (documentSnapshot.contains("id") && documentSnapshot.get("id") != null) {
+                                msgId = documentSnapshot.getLong("id").intValue();
+                            } else {
+                                try { msgId = Integer.parseInt(documentSnapshot.getId()); } catch(NumberFormatException ignored) {}
+                            }
+                            String sender = documentSnapshot.contains("sender_email") ? documentSnapshot.getString("sender_email") : "";
+                            String subject = documentSnapshot.contains("subject") ? documentSnapshot.getString("subject") : "";
+                            String content = documentSnapshot.contains("content") ? documentSnapshot.getString("content") : "";
+                            String branch = documentSnapshot.contains("branch") ? documentSnapshot.getString("branch") : "";
+                            String semester = documentSnapshot.contains("semester") ? documentSnapshot.getString("semester") : "";
+                            String status = documentSnapshot.contains("status") ? documentSnapshot.getString("status") : "pending";
+                            boolean isInd = documentSnapshot.contains("is_individual") && Boolean.TRUE.equals(documentSnapshot.getBoolean("is_individual"));
+                            String indEmail = documentSnapshot.contains("individual_email") ? documentSnapshot.getString("individual_email") : "";
+                            String rejReason = documentSnapshot.contains("rejection_reason") ? documentSnapshot.getString("rejection_reason") : "";
+                            long timestamp = 0L;
+                            if (documentSnapshot.contains("timestamp") && documentSnapshot.get("timestamp") != null) {
+                                Object tsObj = documentSnapshot.get("timestamp");
+                                if (tsObj instanceof Long) timestamp = (Long) tsObj;
+                                else if (tsObj instanceof Integer) timestamp = ((Integer) tsObj).longValue();
+                            }
+                            
                             list.add(new MessageModel(msgId, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Log.e("FirebaseManager", "Error parsing message by id: " + documentSnapshot.getId(), e);
                         }
                     }
                     callback.onMessagesFetched(list);
@@ -230,21 +253,31 @@ public class  FirebaseManager {
                     List<MessageModel> messages = new ArrayList<>();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         try {
-                            int id = document.getLong("id").intValue();
-                            String sender = document.getString("sender_email");
-                            String content = document.getString("content");
-                            String branch = document.getString("branch");
-                            String semester = document.getString("semester");
-                            String status = document.getString("status");
-                            boolean isInd = Boolean.TRUE.equals(document.getBoolean("is_individual"));
-                            String indEmail = document.getString("individual_email");
-                            String rejReason = document.getString("rejection_reason");
-                            long timestamp = document.contains("timestamp") ? document.getLong("timestamp") : 0L;
-                            String subject = document.getString("subject");
-                            if (subject == null) subject = "";
+                            int id = 0;
+                            if (document.contains("id") && document.get("id") != null) {
+                                id = document.getLong("id").intValue();
+                            } else {
+                                try { id = Integer.parseInt(document.getId()); } catch(NumberFormatException ignored) {}
+                            }
+                            String sender = document.contains("sender_email") ? document.getString("sender_email") : "";
+                            String content = document.contains("content") ? document.getString("content") : "";
+                            String branch = document.contains("branch") ? document.getString("branch") : "";
+                            String semester = document.contains("semester") ? document.getString("semester") : "";
+                            String status = document.contains("status") ? document.getString("status") : "pending";
+                            boolean isInd = document.contains("is_individual") && Boolean.TRUE.equals(document.getBoolean("is_individual"));
+                            String indEmail = document.contains("individual_email") ? document.getString("individual_email") : "";
+                            String rejReason = document.contains("rejection_reason") ? document.getString("rejection_reason") : "";
+                            long timestamp = 0L;
+                            if (document.contains("timestamp") && document.get("timestamp") != null) {
+                                Object tsObj = document.get("timestamp");
+                                if (tsObj instanceof Long) timestamp = (Long) tsObj;
+                                else if (tsObj instanceof Integer) timestamp = ((Integer) tsObj).longValue();
+                            }
+                            String subject = document.contains("subject") ? document.getString("subject") : "";
+                            
                             messages.add(new MessageModel(id, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Log.e("FirebaseManager", "Error parsing message by sender: " + document.getId(), e);
                         }
                     }
                     callback.onMessagesFetched(messages);
@@ -260,21 +293,31 @@ public class  FirebaseManager {
                     List<MessageModel> messages = new ArrayList<>();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         try {
-                            int id = document.getLong("id").intValue();
-                            String sender = document.getString("sender_email");
-                            String content = document.getString("content");
-                            String branch = document.getString("branch");
-                            String semester = document.getString("semester");
-                            String status = document.getString("status");
-                            boolean isInd = Boolean.TRUE.equals(document.getBoolean("is_individual"));
-                            String indEmail = document.getString("individual_email");
-                            String rejReason = document.getString("rejection_reason");
-                            long timestamp = document.contains("timestamp") ? document.getLong("timestamp") : 0L;
-                            String subject = document.getString("subject");
-                            if (subject == null) subject = "";
+                            int id = 0;
+                            if (document.contains("id") && document.get("id") != null) {
+                                id = document.getLong("id").intValue();
+                            } else {
+                                try { id = Integer.parseInt(document.getId()); } catch(NumberFormatException ignored) {}
+                            }
+                            String sender = document.contains("sender_email") ? document.getString("sender_email") : "";
+                            String content = document.contains("content") ? document.getString("content") : "";
+                            String branch = document.contains("branch") ? document.getString("branch") : "";
+                            String semester = document.contains("semester") ? document.getString("semester") : "";
+                            String status = document.contains("status") ? document.getString("status") : "pending";
+                            boolean isInd = document.contains("is_individual") && Boolean.TRUE.equals(document.getBoolean("is_individual"));
+                            String indEmail = document.contains("individual_email") ? document.getString("individual_email") : "";
+                            String rejReason = document.contains("rejection_reason") ? document.getString("rejection_reason") : "";
+                            long timestamp = 0L;
+                            if (document.contains("timestamp") && document.get("timestamp") != null) {
+                                Object tsObj = document.get("timestamp");
+                                if (tsObj instanceof Long) timestamp = (Long) tsObj;
+                                else if (tsObj instanceof Integer) timestamp = ((Integer) tsObj).longValue();
+                            }
+                            String subject = document.contains("subject") ? document.getString("subject") : "";
+                            
                             messages.add(new MessageModel(id, sender, subject, content, branch, semester, status, isInd, indEmail, rejReason, timestamp));
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Log.e("FirebaseManager", "Error parsing processed message: " + document.getId(), e);
                         }
                     }
                     callback.onMessagesFetched(messages);
