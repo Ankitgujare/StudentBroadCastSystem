@@ -22,7 +22,6 @@
         android:id="@+id/adminBtn"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:backgroundTint="#E7D6D1"
         android:text="Admin Login"
         android:textColor="#DAE0DC"
         android:layout_marginBottom="12dp" />
